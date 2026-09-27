@@ -45,27 +45,16 @@ pipeline {
             }
         }
 
-        stage("Push the Changed Deployment File to Git") {
+        stage("Push the changed deployment file to Git") {
             steps {
-                script {
-                    sh """
-                        git config user.name "biswarup12"
-                        git config user.email "biswarupmondal2012@gmail.com"
-                        git add deployment.yaml
-                        git commit -m "Update register-app image to ${params.IMAGE_TAG}" || echo "No changes to commit"
-                    """
-                    
-                    withCredentials([
-                        gitUsernamePassword(
-                            credentialsId: 'github',
-                            gitToolName: 'Default'
-                        )
-                    ]) {
-                        // Fixed the full GitHub repository URL and added the missing closing brace
-                        sh """
-                            git push https://github.com main
-                        """
-                    }
+                sh """
+                   git config --global user.name "biswarup12"
+                   git config --global user.email "biswarupmondal@gmail.com"
+                   git add deployment.yaml
+                   git commit -m "Updated Deployment Manifest"
+                """
+                withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
+                  sh "git push https://github.com/biswarup12/gitops-register-app main"
                 }
             }
         }

@@ -1,4 +1,3 @@
-```groovy
 pipeline {
     agent { label "Jenkins-Agent" }
 
@@ -10,7 +9,7 @@ pipeline {
         string(
             name: 'IMAGE_TAG',
             defaultValue: '',
-            description: 'Docker image tag received from CI pipeline'
+            description: 'Docker image tag received from Pipeline A'
         )
     }
 
@@ -30,30 +29,34 @@ pipeline {
             }
         }
 
-        stage("Update the Deployment Tags") {
+        stage("Update the Deployment Tag") {
             steps {
                 sh '''
-                    echo "Updating deployment with image tag: ${IMAGE_TAG}"
+                    echo "IMAGE_TAG received from Pipeline A: ${IMAGE_TAG}"
 
+                    echo "Before update:"
                     cat deployment.yaml
 
-                    sed -i "s#${APP_NAME}:.*#${APP_NAME}:${IMAGE_TAG}#g" deployment.yaml
+                    sed -i -E "s|(image: biswarup1706/register-app-pipeline:).*|\\1${IMAGE_TAG}|" deployment.yaml
 
-                    echo "Updated deployment.yaml:"
+                    echo "After update:"
                     cat deployment.yaml
                 '''
             }
         }
 
-        stage("Push the changed deployment file to Git") {
+        stage("Push the Changed Deployment File to Git") {
             steps {
+
                 sh '''
                     git config user.name "biswarup12"
                     git config user.email "biswarupmondal2012@gmail.com"
 
                     git add deployment.yaml
 
-                    git commit -m "Updated Deployment Manifest"
+                    git commit \
+                      -m "Update register-app image to ${IMAGE_TAG}" \
+                      || echo "No changes to commit"
                 '''
 
                 withCredentials([
@@ -70,4 +73,3 @@ pipeline {
         }
     }
 }
-```

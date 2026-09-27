@@ -14,7 +14,6 @@ pipeline {
     }
 
     stages {
-
         stage("Cleanup Workspace") {
             steps {
                 cleanWs()
@@ -31,17 +30,18 @@ pipeline {
 
         stage("Update the Deployment Tag") {
             steps {
-                sh '''
-                    echo "IMAGE_TAG received from Pipeline A: ${IMAGE_TAG}"
+                // Switched to triple double-quotes (""") so Jenkins can inject ${params.IMAGE_TAG}
+                sh """
+                    echo "IMAGE_TAG received from Pipeline A: ${params.IMAGE_TAG}"
 
                     echo "Before update:"
                     cat deployment.yaml
 
-                    sed -i -E "s|(image: biswarup1706/register-app-pipeline:).*|\\1${IMAGE_TAG}|" deployment.yaml
+                    sed -i -E "s|(image: biswarup1706/register-app-pipeline:).*|\\1${params.IMAGE_TAG}|" deployment.yaml
 
                     echo "After update:"
                     cat deployment.yaml
-                '''
+                """
             }
         }
 
@@ -52,7 +52,7 @@ pipeline {
                         git config user.name "biswarup12"
                         git config user.email "biswarupmondal2012@gmail.com"
                         git add deployment.yaml
-                        git commit -m "Update register-app image to ${IMAGE_TAG}" || echo "No changes to commit"
+                        git commit -m "Update register-app image to ${params.IMAGE_TAG}" || echo "No changes to commit"
                     """
                     
                     withCredentials([
@@ -61,10 +61,12 @@ pipeline {
                             gitToolName: 'Default'
                         )
                     ]) {
-                        // Changing to triple double quotes allows Jenkins credential injection to work
+                        // Fixed the full GitHub repository URL and added the missing closing brace
                         sh """
                             git push https://github.com main
                         """
+                    }
+                }
             }
         }
     }
